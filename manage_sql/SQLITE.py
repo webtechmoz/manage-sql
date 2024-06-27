@@ -144,7 +144,7 @@ class SQLITE:
 
                 params = ', '.join('?' for _ in Dados)
 
-                cursor.execute(f'INSERT INTO {nomeTabela} ({ColunaSQL}) VALUES ({params})', Dados)
+                cursor.execute(f'INSERT INTO {nomeTabela} ({ColunaSQL}) VALUES ({params})', (Dados))
 
                 database.commit()
                 database.close()
