@@ -134,13 +134,7 @@ class SQLITE:
 
                 ColunaSQL = ', '.join(Colunas)
 
-                Dados = []
-
-                for dado in dados:
-                    if type(dado) == str or type(dado) == bool:
-                        Dados.append(f"'{dado}'")
-                    else:
-                        Dados.append(str(dado))
+                Dados = [str(dado) for dado in dados]
 
                 params = ', '.join('?' for _ in Dados)
 
