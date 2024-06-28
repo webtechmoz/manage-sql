@@ -134,6 +134,7 @@ class SQLITE:
 
                 ColunaSQL = ', '.join(Colunas)
 
+<<<<<<< HEAD
                 Dados = []
 
                 for dado in dados:
@@ -141,6 +142,9 @@ class SQLITE:
                         Dados.append(f"'{dado}'")
                     else:
                         Dados.append(str(dado))
+=======
+                Dados = [str(dado) for dado in dados]
+>>>>>>> 5d78acb3739de457ab5f0701b7b3f38e21b7e970
 
                 params = ', '.join('?' for _ in Dados)
 
