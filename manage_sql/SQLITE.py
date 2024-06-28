@@ -134,21 +134,9 @@ class SQLITE:
 
                 ColunaSQL = ', '.join(Colunas)
 
-<<<<<<< HEAD
-                Dados = []
+                params = ', '.join('?' for _ in dados)
 
-                for dado in dados:
-                    if type(dado) == str or type(dado) == bool:
-                        Dados.append(f"'{dado}'")
-                    else:
-                        Dados.append(str(dado))
-=======
-                Dados = [str(dado) for dado in dados]
->>>>>>> 5d78acb3739de457ab5f0701b7b3f38e21b7e970
-
-                params = ', '.join('?' for _ in Dados)
-
-                cursor.execute(f'INSERT INTO {nomeTabela} ({ColunaSQL}) VALUES ({params})', (Dados))
+                cursor.execute(f'INSERT INTO {nomeTabela} ({ColunaSQL}) VALUES ({params})', (dados))
 
                 database.commit()
                 database.close()

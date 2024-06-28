@@ -9,7 +9,6 @@ try:
 except:
     from manage_sql import SQLITE
 
-
 class TestSQLITE(unittest.TestCase):
     
     @classmethod
