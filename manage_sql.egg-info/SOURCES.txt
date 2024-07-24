@@ -1,0 +1,13 @@
+LICENCE
+README.md
+setup.py
+manage_sql/MYSQL.py
+manage_sql/SQLITE.py
+manage_sql/__init__.py
+manage_sql.egg-info/PKG-INFO
+manage_sql.egg-info/SOURCES.txt
+manage_sql.egg-info/dependency_links.txt
+manage_sql.egg-info/requires.txt
+manage_sql.egg-info/top_level.txt
+test_manage_sql/__init__.py
+test_manage_sql/test_SQLITE.py
