@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='manage-sql',
-    version='0.4.0',
+    version='0.4.1',
     author='Web Tech Moz',
     author_email='zoidycine@gmail.com',
     description='Biblioteca Python para gestão de bases de dados SQLite e MYSQL com maior eficiência',

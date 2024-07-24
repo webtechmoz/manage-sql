@@ -1,5 +1,4 @@
 import mysql.connector as mysql
-import mysql.vendor
 import hashlib as sh
 
 class MYSQL:
