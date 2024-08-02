@@ -1,2 +1,0 @@
-manage_sql
-test_manage_sql

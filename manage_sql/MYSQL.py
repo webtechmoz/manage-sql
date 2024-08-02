@@ -1,5 +1,6 @@
 import mysql.connector as mysql
 import hashlib as sh
+import pandas as pd
 
 class MYSQL:
     '''
@@ -8,7 +9,7 @@ class MYSQL:
     Importe a classe e use um dos métodos abaixo:
     ```python
     # Importando a classe
-    from manage-sql import MYSQL
+    from manage_sql import MYSQL
     
     # Instaciando a classe
     db = MYSQL(
@@ -289,14 +290,13 @@ class MYSQL:
         database.commit()
         database.close()
 
-    def editarDados(self, nomeTabela: str, Coluna: str, Valor: str, conditions: str = ''):
+    def editarDados(self, nomeTabela: str, colunas_valores: dict, conditions: str = ''):
         """
-        Edita registros em uma tabela no banco de dados MYSQL.
+        Edita registos em uma tabela no banco de dados MYSQL.
 
         :param nomeTabela: Nome da tabela a ser editada.
-        :param Coluna: Nome da coluna a ser editada.
-        :param Valor: Novo valor a ser atribuído à coluna.
-        :param conditions: Condição SQL para selecionar os registros a serem editados. Se vazio, todos os registros serão atualizados.
+        :param colunas_valores: Dicionário contendo as colunas e os valores a editar.
+        :param conditions: Condição SQL para selecionar os registos a serem editados. Se vazio, todos os registos serão atualizados.
         
         Exemplo de uso:
         ```python
@@ -309,19 +309,30 @@ class MYSQL:
         )
         
         # Edita registros com id = 1
-        db.editarDados("minha_tabela", "nome_coluna", "novo_valor", "id = 1")
+        db.editarDados(
+            nomeTabela="minha_tabela",
+            colunas_valores = {"coluna_1": "novo_valor", "coluna_2": "novo_valor"}
+            conditions="id = 1"
+        )
         
-        # Edita todos os registros da tabela
-        db.editarDados("minha_tabela", "nome_coluna", "novo_valor")
+        # Edita todos os registos da tabela
+        db.editarDados(
+            nomeTabela="minha_tabela",
+            colunas_valores = {"coluna_1": "novo_valor", "coluna_2": "novo_valor"}
+            Valor="novo_valor"
+        )
         ```
         """
         database, cursor = self.conectarBanco()
 
+        colunas = ", ".join([f"{col} = %s" for col in colunas_valores.keys()])
+        valores = list(colunas_valores.values())
+
         if conditions == '':
-            cursor.execute(f"UPDATE {nomeTabela} SET {Coluna} = %s", (Valor,))
+            cursor.execute(f"UPDATE {nomeTabela} SET {colunas}", valores)
         
         else:
-            cursor.execute(f"UPDATE {nomeTabela} SET {Coluna} = %s WHERE {conditions}", (Valor,))
+            cursor.execute(f"UPDATE {nomeTabela} SET {colunas} WHERE {conditions}", valores)
         
         database.commit()
         database.close()
@@ -711,7 +722,7 @@ if __name__ == '__main__':
         user='root',
         database='users',
         password='Alex756545!',
-        port=3307
+        port=3306
     )
     
     # Criando as variáveis necessárias
@@ -727,7 +738,7 @@ if __name__ == '__main__':
         'usuario': 'azunguze',
         'senha': 'Aa123'
     }
-    
+
     # db.criarTabela()
     db.criarTabela(
         nomeTabela=nomebela,
@@ -752,14 +763,12 @@ if __name__ == '__main__':
     # db.editarDados()
     db.editarDados(
         nomeTabela=nomebela,
-        Coluna=list(colunas.keys())[2],
-        Valor=db.encriptarValor('Aa123')
+        colunas_valores={'usuario': 'webtech', 'senha': db.encriptarValor('Aa123')}
     )
     
     db.editarDados(
         nomeTabela=nomebela,
-        Coluna=list(colunas.keys())[2],
-        Valor=db.encriptarValor('Aa123'),
+        colunas_valores={'usuario': 'webtech', 'senha': db.encriptarValor('Aa123')},
         conditions='id = 2'
     )
     
@@ -767,7 +776,7 @@ if __name__ == '__main__':
     db.adicionarColuna(
         nomeTabela=nomebela,
         Coluna='email',
-        ColunaTipo='VARCHAR(256)'
+        ColunaTipo='TEXT'
     )
     
     # db.apagarColuna()
@@ -778,13 +787,23 @@ if __name__ == '__main__':
     
     # db.verDados()
     dados_1 = db.verDados(
-        nomeTabela=nomebela
+        nomeTabela=nomebela,
+        colunas=','.join(db.nomeColunas(nomeTabela=nomebela)[:-1])
     )
     
     dados_2 = db.verDados(
         nomeTabela=nomebela,
+        colunas=','.join(db.nomeColunas(nomeTabela=nomebela)[:-1]),
         conditions='id = 1'
     )
+
+    df_1 = pd.DataFrame(dados_1, columns=db.nomeColunas(nomeTabela=nomebela)[:-1])
+    print('Tabela 1')
+    print(f'{df_1.to_string(index=False)}\n')
+
+    df_2 = pd.DataFrame(dados_2, columns=db.nomeColunas(nomeTabela=nomebela)[:-1])
+    print('Tabela 2')
+    print(f'{df_2.to_string(index=False)}\n')
     
     # db.numeroTabelas
     print(f'numero de tabelas: {db.numeroTabelas}')
@@ -794,13 +813,13 @@ if __name__ == '__main__':
     
     # db.numeroLinhas()
     print(
-        f'numero linhas: {db.totalLinhas(nomeTabela=nomebela)}'
+        f'numero linhas: {db.totalLinhas(nomeTabela=nomebela)}\n'
     )
     
     # db.ultimaLinha()
-    print(
-        f'ultima linha: {db.ultimaLinha(nomeTabela=nomebela)}'
-    )
+    df_3 = pd.DataFrame(db.ultimaLinha(nomeTabela=nomebela), index=['id', 'nome', 'usuario', 'senha'])
+    print('Última Linha')
+    print(df_3)
     
     # db.numeroColunas()
     print(f'numero de colunas: {db.numeroColunas(nomeTabela=nomebela)}')
@@ -816,9 +835,4 @@ if __name__ == '__main__':
     # db.apagarTabela()
     db.apagarTabela(
         nomeTabela=nomebela
-    )
-    
-    # db.apagarBanco()
-    db.apagarBanco(
-        nomeBanco=db.database
     )
