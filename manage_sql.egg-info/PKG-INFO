@@ -1,3 +1,24 @@
+Metadata-Version: 2.1
+Name: manage-sql
+Version: 0.5.0
+Summary: Biblioteca Python para gestão de bases de dados SQLite, MYSQL e PostgreSQL com maior eficiência
+Home-page: https://github.com/webtechmoz/manage-sql.git
+Author: Web Tech Moz
+Author-email: zoidycine@gmail.com
+License: MIT
+Keywords: manage-sql,sqlite,sqlite manager,mysql,mysql manager,mysql python,mysql connector,postgresql connector,postgresql,postgresql python
+Classifier: Programming Language :: Python :: 3.10
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENCE
+Requires-Dist: dataclasses
+Requires-Dist: mysql-connector
+Requires-Dist: mysql-connector-python
+Requires-Dist: pandas
+Requires-Dist: psycopg2-binary
+
 # GESTÃO DE BANCOS DE DADOS (MYSQL & SQLITE)
 
 ## Índice da Biblioteca
