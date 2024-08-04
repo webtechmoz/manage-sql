@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: manage-sql
-Version: 0.5.0
+Version: 0.5.1
 Summary: Biblioteca Python para gestão de bases de dados SQLite, MYSQL e PostgreSQL com maior eficiência
 Home-page: https://github.com/webtechmoz/manage-sql.git
 Author: Web Tech Moz
