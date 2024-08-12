@@ -1,4 +1,4 @@
-# GESTÃO DE BANCOS DE DADOS (MYSQL & SQLITE)
+# GESTÃO DE BANCOS DE DADOS (MYSQL | SQLITE | POSTGRESQL)
 
 ## Índice da Biblioteca
 1. [SQLITE](#sqlitepy)
