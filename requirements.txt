@@ -1,4 +1,4 @@
-dataclasses>=0.8
-mysql-connector>=2.2.9
-mysql-connector-python>=9.0.0
-psycopg2-binary>=2.9
+dataclasses
+mysql-connector
+mysql-connector-python
+psycopg2-binary

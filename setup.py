@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='manage-sql',
-    version='0.5.2',
+    version='0.5.3',
     author='Web Tech Moz',
     author_email='zoidycine@gmail.com',
     description='Biblioteca Python para gestão de bases de dados SQLite, MYSQL e PostgreSQL com maior eficiência',
@@ -23,5 +23,5 @@ setup(
         "mysql-connector-python",
         "psycopg2-binary"
     ],
-    python_requires='>=3.10',
+    python_requires='>=3.7',
 )
