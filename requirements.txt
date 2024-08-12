@@ -1,4 +1,3 @@
-dataclasses
 mysql-connector
 mysql-connector-python
 psycopg2-binary
