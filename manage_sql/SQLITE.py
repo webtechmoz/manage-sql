@@ -32,7 +32,7 @@ class SQLITE:
     ```
     '''
 
-    def __init__(self, nomeBanco: str):
+    def __init__(self, nomeBanco: str, path: str = None):
         """
         Inicializa a classe com o nome do banco de dados.
         
@@ -47,46 +47,9 @@ class SQLITE:
         """
         
         self.nomeBanco = nomeBanco
-
-    @property
-    def numeroTabelas(self) -> int:
-        """
-        Retorna o número de tabelas no banco de dados conectado.
-        
-        Returns:
-            _int_: número de tabelas constantes no banco de dados
-        
-        Exemplo de uso:
-        ```python
-        db = SQLITE(
-            nomeBanco='nome_do_banco'
-        )
-        db.numeroTabelas
-        ```
-        """
-        
-        return self._numeroTabelas
+        self.path = path
     
-    @property
-    def nomeTabelas(self) -> list:
-        """
-        Retorna o nome de tabelas no banco de dados conectado.
-        
-        Returns:
-            _list_: nome de tabelas constantes no banco de dados
-        
-        Exemplo de uso:
-        ```python
-        db = SQLITE(
-            nomeBanco='nome_do_banco',
-        )
-        db.nomeTabelas
-        ```
-        """
-        
-        return self._nomeTabelas
-    
-    def conectarBanco(self):
+    def conectarBanco(self) -> tuple[sq.Connection, sq.Cursor] | str:
         """
         Conecta ao banco de dados e cria a pasta 'database' se não existir.
 
@@ -101,15 +64,25 @@ class SQLITE:
         ```
         """
         try:
-            path = rf'{os.getcwd()}\database'
-            os.mkdir(path)
+            if self.path is None:
+                db_path = rf'{os.getcwd()}\database'
+                os.mkdir(db_path)
+                self.path = db_path
+            
+            else:
+                os.mkdir(self.path)
+
         except:
             pass
-        
-        database = sq.connect(f'database/{self.nomeBanco}.db')
-        cursor = database.cursor()
 
-        return database, cursor
+        if os.path.isdir(self.path):
+            database = sq.connect(f'{self.path}/{self.nomeBanco}.db')
+            cursor = database.cursor()
+            return database, cursor
+        
+        else:
+            print(f'O caminho {self.path} é inválido')
+            exit()
 
     def criarTabela(self, nomeTabela: str, Colunas: list, ColunasTipo: list):
         """
@@ -361,15 +334,13 @@ class SQLITE:
         ```
         """
         database, cursor = self.conectarBanco()
+        database.close()
 
         try:
-            os.remove(rf'{os.getcwd()}\database\{nomeBanco}.db')
+            os.remove(rf'{self.path}\{nomeBanco}.db')
         
-        except:
-            pass
-
-        database.commit()
-        database.close()
+        except Exception as e:
+            print(f'Erro: {e}')
 
     def verDados(self, nomeTabela: str, conditions: str = '', colunas: str = '*'):
         """
@@ -430,7 +401,7 @@ class SQLITE:
         return value_hashed
     
     @property
-    def _nomeTabelas(self):
+    def nomeTabelas(self) -> list[str]:
         """
         Retorna o nome de tabelas no banco de dados conectado.
         
@@ -442,7 +413,7 @@ class SQLITE:
         db = SQLITE(
             nomeBanco='nome_do_banco'
         )
-        db.nomeTabelas()
+        db.nomeTabelas
         ```
         """
         
@@ -462,7 +433,7 @@ class SQLITE:
         return rows
     
     @property
-    def _numeroTabelas(self):
+    def numeroTabelas(self) -> int:
         """
         Retorna o número de tabelas no banco de dados conectado.
         
@@ -488,7 +459,7 @@ class SQLITE:
         
         return number
     
-    def totalLinhas(self, nomeTabela: str):
+    def totalLinhas(self, nomeTabela: str) -> int:
         """
         Retona o número total de registos de uma tabela no banco de dados.
         
@@ -519,7 +490,7 @@ class SQLITE:
         
         return number
     
-    def ultimaLinha(self, nomeTabela: str):
+    def ultimaLinha(self, nomeTabela: str) -> list:
         """
         Retorna os dados do último registo na tabela do banco de dados.
         
@@ -557,7 +528,7 @@ class SQLITE:
             
             return id
     
-    def numeroColunas(self, nomeTabela: str):
+    def numeroColunas(self, nomeTabela: str) -> int:
         """
         Retorna o número total de colunas na tabela do banco de dados.
         
@@ -588,7 +559,7 @@ class SQLITE:
         
         return len(number)
     
-    def nomeColunas(self, nomeTabela: str):
+    def nomeColunas(self, nomeTabela: str) -> list[str]:
         """
         Retorna o número total de colunas na tabela do banco de dados.
         
@@ -596,7 +567,7 @@ class SQLITE:
             _nomeTabela_: Nome da Tabela que pretende saber o número de registos
         
         Returns:
-            _int_: Número total de colunas na tabela de dados
+            _list_: Lista de colunas na tabela de dados
         
         Exemplo de uso:
         ```python

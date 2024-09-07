@@ -41,7 +41,7 @@ class POSTGRESQL:
     ```
     '''
 
-    def __init__(self, host: str, user: str = 'postgres', database: str = None, password: str = '', port: int = 5432):
+    def __init__(self, postgre_url: str = None, host: str = None, user: str = None, database: str = None, password: str = '', port: int = 5432):
         """
         Inicializa a classe com o nome do banco de dados.
         
@@ -68,52 +68,7 @@ class POSTGRESQL:
         self.password = password
         self.database = database
         self.port = port
-
-    @property
-    def numeroTabelas(self) -> int:
-        """
-        Retorna o número de tabelas no banco de dados conectado.
-        
-        Returns:
-            _int_: número de tabelas constantes no banco de dados
-        
-        Exemplo de uso:
-        ```python
-        db = POSTGRESQL(
-            host='serverhost',
-            user='root',
-            database='usuarios',
-            password='admin',
-            port=5432
-        )
-        db.numeroTabelas
-        ```
-        """
-        
-        return self._numeroTabelas
-    
-    @property
-    def nomeTabelas(self) -> list:
-        """
-        Retorna o nome de tabelas no banco de dados conectado.
-        
-        Returns:
-            _list_: nome de tabelas constantes no banco de dados
-        
-        Exemplo de uso:
-        ```python
-        db = POSTGRESQL(
-            host='serverhost',
-            user='root',
-            database='usuarios',
-            password='admin',
-            port=5432
-        )
-        db.nomeTabelas
-        ```
-        """
-        
-        return self._nomeTabelas
+        self.postgre_url = postgre_url
     
     def conectarBanco(self):
         """
@@ -137,30 +92,27 @@ class POSTGRESQL:
         
 
         try:
-            database = postgresql.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                port=self.port
-            )
-            
-            database.autocommit = True
-            database.cursor().execute(f'CREATE DATABASE {self.database}')
+            if self.postgre_url != None:
+                database = postgresql.connect(
+                    dsn=self.postgre_url
+                )
 
-            database = postgresql.connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
-                database=self.database,
-                port=self.port
-            )
+                database.autocommit = True
+                cursor = database.cursor()
 
-            cursor = database.cursor()
+                return database, cursor
             
-            return database, cursor
-        
-        except Exception as e:
-            if 'already exists' in str(e):
+            else:
+                database = postgresql.connect(
+                    host=self.host,
+                    user=self.user,
+                    password=self.password,
+                    port=self.port
+                )
+                
+                database.autocommit = True
+                database.cursor().execute(f'CREATE DATABASE {self.database}')
+
                 database = postgresql.connect(
                     host=self.host,
                     user=self.user,
@@ -169,13 +121,28 @@ class POSTGRESQL:
                     port=self.port
                 )
 
-                database.autocommit = True
                 cursor = database.cursor()
-
+                
                 return database, cursor
+        
+        except Exception as e:
+            if self.postgre_url == None:
+                if 'already exists' in str(e):
+                    database = postgresql.connect(
+                        host=self.host,
+                        user=self.user,
+                        password=self.password,
+                        database=self.database,
+                        port=self.port
+                    )
 
-            else:
-                print(f'Erro: {e}')
+                    database.autocommit = True
+                    cursor = database.cursor()
+
+                    return database, cursor
+            
+            print(f'Erro: {e}')
+            exit()
                 
 
     def criarTabela(self, nomeTabela: str, Colunas: list, ColunasTipo: list):
@@ -450,12 +417,17 @@ class POSTGRESQL:
             port=self.port
         )
 
-        database.autocommit = True
-        cursor = database.cursor()
-        cursor.execute(f'DROP DATABASE IF EXISTS {nomeBanco}')
+        try:
+            database.autocommit = True
+            cursor = database.cursor()
+            cursor.execute(f'DROP DATABASE IF EXISTS {nomeBanco}')
 
-        cursor.close()
-        database.close()
+            cursor.close()
+            database.close()
+        
+        except Exception as e:
+            print(f'Erro: {e}')
+            exit()
         
 
     def verDados(self, nomeTabela: str, conditions: str = '', colunas: str = '*'):
@@ -552,7 +524,7 @@ class POSTGRESQL:
             return False
     
     @property
-    def _nomeTabelas(self):
+    def nomeTabelas(self) -> list[str]:
         """
         Retorna o nome de tabelas no banco de dados conectado.
         
@@ -587,7 +559,7 @@ class POSTGRESQL:
         return rows
     
     @property
-    def _numeroTabelas(self):
+    def numeroTabelas(self) -> int:
         """
         Retorna o número de tabelas no banco de dados conectado.
         
@@ -611,7 +583,7 @@ class POSTGRESQL:
         
         return number
     
-    def totalLinhas(self, nomeTabela: str):
+    def totalLinhas(self, nomeTabela: str) -> int:
         """
         Retona o número total de registos de uma tabela no banco de dados.
         
@@ -645,7 +617,7 @@ class POSTGRESQL:
         
         return number
     
-    def ultimaLinha(self, nomeTabela: str):
+    def ultimaLinha(self, nomeTabela: str) -> list:
         """
         Retorna os dados do último registo na tabela do banco de dados.
         
@@ -685,7 +657,7 @@ class POSTGRESQL:
             
             return id
     
-    def numeroColunas(self, nomeTabela: str):
+    def numeroColunas(self, nomeTabela: str) -> int:
         """
         Retorna o número total de colunas na tabela do banco de dados.
         
@@ -719,7 +691,7 @@ class POSTGRESQL:
         
         return len(columns)
     
-    def nomeColunas(self, nomeTabela: str):
+    def nomeColunas(self, nomeTabela: str) -> list[str]:
         """
         Retorna o número total de colunas na tabela do banco de dados.
         
