@@ -31,7 +31,7 @@ class POSTGRESQL:
         database (str): The name of the database to connect to.
         password (str): The password for the PostgreSQL connection.
         port (int): The port for the PostgreSQL server. Default is 5432.
-        column_types (Types): A reference to column types.
+        Column_types (Types): A reference to column types.
         Column (Column): A reference to the `Column` object.
         filter_by (Filter): A reference to the `Filter` object for filtering.
         delete_by (Filter): A reference to the `Filter` object for deleting.
@@ -66,7 +66,7 @@ class POSTGRESQL:
         self.__password = password
         self.__database = database
         self.__port = port
-        self.column_types = Types()
+        self.Column_types = Types()
         self.Column = Column
         self.filter_by = Filter
         self.delete_by = Filter
@@ -251,7 +251,7 @@ class POSTGRESQL:
             columns_details: list[Column] = [
                 Column(
                     name='id',
-                    column_type=self.column_types.Integer.serial,
+                    column_type=self.Column_types.Integer.serial,
                     primary_key=True
                 ),
                 *columns

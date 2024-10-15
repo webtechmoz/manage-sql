@@ -47,7 +47,7 @@ class MYSQL:
         self.__password = password
         self.__database = database
         self.__port = port
-        self.column_types = Types()
+        self.Column_types = Types()
         self.Column = Column
         self.filter_by = Filter
         self.delete_by = Filter
@@ -183,7 +183,7 @@ class MYSQL:
             columns_details: list[Column] = [
                 Column(
                     name='id',
-                    column_type=self.column_types.Integer.integer,
+                    column_type=self.Column_types.Integer.integer,
                     primary_key=True,
                     auto_increment=True
                 ),

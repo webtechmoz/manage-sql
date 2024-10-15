@@ -106,10 +106,10 @@ db = POSTEGRESQL(
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.create_table(
@@ -117,11 +117,11 @@ db.create_table(
     columns=[
         db.Column(
             name='nome',
-            column_type=db.column_types.Char(60).varchar
+            column_type=db.Column_types.Char(60).varchar
         ),
         db.Column(
             name='username',
-            column_type=db.column_types.Char(60).varchar
+            column_type=db.Column_types.Char(60).varchar
         )
     ]
 )
@@ -132,7 +132,7 @@ db.create_table(
 - `columns`: *list[Column]* - lista de colunas que pretende criar dentro da tabela.
 
 **Nota 1:** A documentação devida do `Column` será feita em breve.
-**Nota 2:** Tenha atenção aos tipos do `column_types`, dado que cada tipo de banco de dados possui seus respectivos tipos.
+**Nota 2:** Tenha atenção aos tipos do `Column_types`, dado que cada tipo de banco de dados possui seus respectivos tipos.
 
 ***
 
@@ -141,10 +141,10 @@ db.create_table(
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.insert_data(
@@ -174,10 +174,10 @@ db.insert_data(
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.detele_data(
@@ -197,11 +197,13 @@ db.detele_data(
 **Parametros de Filtragem**
 O `delete_by` deve receber uma coluna base para fazer a filtragem dos dados. Este método possui várioss metodos de filtragem abaixo indicados:
 - `EQUAL`: recebe um valor em que a coluna especificada deverá ser igual `=`
+- `EQUAL`: recebe um valor em que a coluna especificada deverá ser igual `!=`
 - `GATHER_THAN`: recebe um valor minimo para comparação `>`
 - `GATHER_OR_EQUAL`: recebe um valor que deverá ser o mínimo incluido para comparação `>=`
 - `LESS_THAN`: recebe um valor máximo para comparação `<`
 - `LESS_OR_EQUAL`: recebe um valor máximo incluido `<=`
 - `CONTAIN`: recebe uma parte de texto para validação de strings `LIKE`
+- `NOT_CONTAIN`: recebe uma parte de texto para validação de strings `NOT LIKE`
 
 Pode tambem fazer filtragem em multiplas colunas usando as condicionais abaixo:
 
@@ -210,10 +212,10 @@ Pode tambem fazer filtragem em multiplas colunas usando as condicionais abaixo:
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 # Filtrando usando o OR
@@ -251,10 +253,10 @@ db.detele_data(
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 dados = db.select_data(
@@ -282,10 +284,10 @@ print(dados)
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.update_data(
@@ -313,17 +315,17 @@ db.update_data(
 ### Adiconar Coluna
 ```python
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.add_column(
     tablename='usuarios',
     column=db.Column(
         name='idade',
-        column_type=db.column_types.Integer.integer
+        column_type=db.Column_types.Integer.integer
     )
 )
 ```
@@ -341,10 +343,10 @@ Mais Detalhes sobre a `Column` veja a documentação [clicando aqui](#criar-tabe
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.drop_column(
@@ -364,10 +366,10 @@ db.drop_column(
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 db.drop_table(
@@ -387,10 +389,10 @@ Caso queira rodar outras queries SQL que o `manage_sql` ainda não possua de for
 from manage_sql import MYSQL
 
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 columns = db.execute_query(
@@ -406,10 +408,10 @@ O `manage_sql` possui um metodo proprio para encriptar valores baseado no hash51
 ```python
 from manage_sql import MYSQL
 db = MYSQL(
-    host='localhost',
-    username='root',
-    password='Alex756545!',
-    database='usuarios'
+    host='hostname',
+    username='username',
+    password='user_password',
+    database='database_name'
 )
 
 hash_value = db.encrypt_value(

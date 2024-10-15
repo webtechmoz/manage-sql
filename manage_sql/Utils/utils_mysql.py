@@ -391,6 +391,12 @@ class Filter:
         self.__add_filter(condition='=', value=value)
         return self
     
+    def NOT_EQUAL(self, value):
+        """Adds a not equality filter."""
+
+        self.__add_filter(condition='!=', value=value)
+        return self
+    
     def GATHER_THAN(self, value):
         """Adds a greater-than filter."""
 
@@ -419,6 +425,12 @@ class Filter:
         """Adds a 'LIKE' filter for partial matches."""
 
         self.__add_filter(condition='LIKE', value=f'%{value}%')
+        return self
+    
+    def NOT_CONTAIN(self, value):
+        """Adds a 'NOT LIKE' filter for partial matches."""
+
+        self.__add_filter(condition='NOT LIKE', value=f'%{value}%')
         return self
     
     def __add_filter(self, condition: str, value):
