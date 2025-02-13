@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='manage-sql',
-    version='1.0.1',
+    version='1.0.2',
     author='Web Tech Moz',
     author_email='zoidycine@gmail.com',
     description='Python library for managing SQLite, MySQL, and PostgreSQL databases with greater efficiency.',

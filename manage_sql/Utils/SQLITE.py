@@ -1,6 +1,6 @@
+import multiprocessing
 import sqlite3 as sq
 import os
-import multiprocessing
 
 try:
     from ..Utils.utils_sqlite import (
@@ -64,40 +64,14 @@ class SQLITE:
         self.filter_by = Filter
         self.delete_by = Filter
         self.ColumnData = ColumnData
+        self.__sql_multiprocess = SQLITE_MULTI(
+            database= self.__database,
+            path= self.__path
+        )
     
     @property
     def __connect(self) -> tuple[sq.Connection, sq.Cursor]:
-        """
-        Establishes a connection to the SQLite database and returns the connection and cursor.
-
-        Returns:
-            tuple[Connection, Cursor]: The SQLite connection and cursor.
-
-        Raises:
-            Exception:
-                If there is an error connecting to the database or creating the directory.
-        """
-        def create_connection() -> tuple[sq.Connection, sq.Cursor]:
-
-            if not self.__path.endswith('.db'):
-                self.__path = os.path.join(self.__path, f'{self.__database}.db')
-
-            connection = sq.connect(self.__path)
-            cursor = connection.cursor()
-
-            return connection, cursor
-        
-        try:
-            os.mkdir(path=self.__path)
-
-            return create_connection()
-        
-        except Exception as e:
-            if 'WinError 183' in str(e):
-                return create_connection()
-            
-            else:
-                self.__exception_error(message_error=e)
+        return self.__sql_multiprocess.public_connect
     
     @property
     def tables(self) -> list[Table]:
@@ -161,14 +135,6 @@ class SQLITE:
             columns (list[Column]): List of Column objects defining the structure of the table columns.
         """
 
-        def create_table_multi(table_name: str, columns: str):
-            connection, cursor = self.__connect
-            cursor.execute(
-                f'CREATE TABLE IF NOT EXISTS {table_name} ({columns})'
-            )
-
-            connection.close()
-
         try:
             columns_details: list[Column] = [
                 Column(
@@ -182,7 +148,7 @@ class SQLITE:
 
             all_columns = ', '.join(column.column_parameters for column in columns_details)
             multiprocessing.Process(
-                target=create_table_multi,
+                target=self.__sql_multiprocess.create_table_multi,
                 args=(tablename, all_columns),
                 daemon=True
             ).start()
@@ -199,23 +165,13 @@ class SQLITE:
             insert_query: (list[ColumnData]): List of ColumnData objects containing the data to be inserted.
         """
 
-        def insert_data_multi(table_name: str, columns: str, key: str, params: list[None]):
-            connection, cursor = self.__connect
-
-            cursor.execute(
-                f'INSERT INTO {table_name} ({columns}) VALUES ({key})', tuple(params)
-            )
-
-            connection.commit()
-            connection.close()
-
         columns: str = ', '.join([f'{edit.column}' for edit in insert_query])
         params: list = [edit.value for edit in insert_query]
         key: str = ', '.join('?' for _ in insert_query)
 
         try:
             multiprocessing.Process(
-                target=insert_data_multi,
+                target=self.__sql_multiprocess.insert_data_multi,
                 args=(tablename, columns, key, params),
                 daemon=True
             ).start()
@@ -231,28 +187,24 @@ class SQLITE:
             tablename (str): Name of the table where data will be deleted.
             condition (Filter, optional): Filtering condition to specify which records to delete.
         """
-
-        def delete_data_multi(tablename: str, condition: str):
-            connection, cursor = self.__connect
-
-            if not condition:
-                cursor.execute(f'DELETE FROM {tablename}')
+        
+        try:
+            if condition:
+                multiprocessing.Process(
+                    target=self.__sql_multiprocess.delete_data_multi,
+                    args=(tablename),
+                    daemon=True
+                ).start()
             
             else:
                 condition_query = condition._Filter__condition.strip()
                 condition_params = condition._Filter__params
 
-                cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
-            
-            connection.commit()
-            connection.close()
-        
-        try:
-            multiprocessing.Process(
-                target=delete_data_multi,
-                args=(tablename, condition),
-                daemon=True
-            ).start()
+                multiprocessing.Process(
+                    target=self.__sql_multiprocess.delete_data_multi,
+                    args=(tablename, condition_params, condition_query),
+                    daemon=True
+                ).start()
         
         except Exception as e:
             self.__exception_error(message_error=e)
@@ -303,32 +255,29 @@ class SQLITE:
                 Condition to specify which records to update.
         """
 
-        def update_data_multi(table_name: str, columns: str, params: list):
-            connection, cursor = self.__connect
+        columns: str = ', '.join([f'{edit.column} = ?' for edit in edit_query])
+        params: list = [edit.value for edit in edit_query]
+
+        try:
+            
 
             if not condition:
-                cursor.execute(f"UPDATE {tablename} SET {columns}", tuple(params))
+                multiprocessing.Process(
+                    target=self.__sql_multiprocess.update_data_multi,
+                    args=(tablename, columns, params),
+                    daemon=True
+                ).start()
             
             else:
                 condition_query: str = condition._Filter__condition.strip()
                 params.extend(condition._Filter__params)
 
-                cursor.execute(f"UPDATE {tablename} SET {columns} {condition_query}", tuple(params))
-            
-            connection.commit()
-            connection.close()
-        
+                multiprocessing.Process(
+                    target=self.__sql_multiprocess.update_data_multi,
+                    args=(tablename, columns, params, condition_query),
+                    daemon=True
+                ).start()
 
-        columns: str = ', '.join([f'{edit.column} = ?' for edit in edit_query])
-        params: list = [edit.value for edit in edit_query]
-
-        try:
-            multiprocessing.Process(
-                target=update_data_multi,
-                args=(tablename, columns, params),
-                daemon=True
-            ).start()
-        
         except Exception as e:
             self.__exception_error(message_error=e)
     
@@ -418,20 +367,9 @@ class SQLITE:
             Exception:
                 If there is an error in executing the SQL query, the exception is logged or raised.
         """
-
-        def execute_query_multi(query: str):
-            try:
-                connection, cursor = self.__connect
-
-                cursor.execute(query)
-
-                return cursor.fetchall()
-            
-            finally:
-                connection.close()
         
         multiprocessing.Process(
-            target=execute_query_multi,
+            target=self.__sql_multiprocess.execute_query_multi,
             args=(query),
             daemon=True
         ).start()
@@ -468,3 +406,103 @@ class SQLITE:
     def __exception_error(self, message_error: str):
         print(f'Error: {message_error}')
         exit()
+
+class SQLITE_MULTI:
+    def __init__(
+        self,
+        database: str,
+        path: str
+    ):
+        self.__database = database
+        self.__path = path
+    
+    @property
+    def __connect(self) -> tuple[sq.Connection, sq.Cursor]:
+        """
+        Establishes a connection to the SQLite database and returns the connection and cursor.
+
+        Returns:
+            tuple[Connection, Cursor]: The SQLite connection and cursor.
+
+        Raises:
+            Exception:
+                If there is an error connecting to the database or creating the directory.
+        """
+        def create_connection() -> tuple[sq.Connection, sq.Cursor]:
+
+            if not self.__path.endswith('.db'):
+                self.__path = os.path.join(self.__path, f'{self.__database}.db')
+
+            connection = sq.connect(self.__path)
+            cursor = connection.cursor()
+
+            return connection, cursor
+        
+        try:
+            os.mkdir(path=self.__path)
+
+            return create_connection()
+        
+        except Exception as e:
+            if 'WinError 183' in str(e):
+                return create_connection()
+            
+            else:
+                self.__exception_error(message_error=e)
+    
+    @property
+    def public_connect(self):
+        return self.__connect
+    
+    def create_table_multi(self, table_name: str, columns: str):
+            connection, cursor = self.__connect
+            cursor.execute(
+                f'CREATE TABLE IF NOT EXISTS {table_name} ({columns})'
+            )
+
+            connection.close()
+    
+    def insert_data_multi(self, table_name: str, columns: str, key: str, params: list[None]):
+        connection, cursor = self.__connect
+
+        cursor.execute(
+            f'INSERT INTO {table_name} ({columns}) VALUES ({key})', tuple(params)
+        )
+
+        connection.commit()
+        connection.close()
+    
+    def delete_data_multi(self, tablename: str, condition_params: list = None, condition_query: str = None):
+        connection, cursor = self.__connect
+
+        if not condition_query:
+            cursor.execute(f'DELETE FROM {tablename}')
+        
+        else:
+            cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
+        
+        connection.commit()
+        connection.close()
+    
+    def update_data_multi(self, tablename: str, columns: str, params: list, condition_query: str = None):
+            connection, cursor = self.__connect
+
+            if not condition_query:
+                cursor.execute(f"UPDATE {tablename} SET {columns}", tuple(params))
+            
+            else:
+                cursor.execute(f"UPDATE {tablename} SET {columns} {condition_query}", tuple(params))
+
+            connection.commit()
+            connection.close()
+    
+    def execute_query_multi(self, query: str):
+        try:
+            connection, cursor = self.__connect
+
+            cursor.execute(query)
+
+            return cursor.fetchall()
+        
+        finally:
+            connection.close()
