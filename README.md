@@ -197,7 +197,7 @@ db.detele_data(
 **Parametros de Filtragem**
 O `delete_by` deve receber uma coluna base para fazer a filtragem dos dados. Este método possui várioss metodos de filtragem abaixo indicados:
 - `EQUAL`: recebe um valor em que a coluna especificada deverá ser igual `=`
-- `EQUAL`: recebe um valor em que a coluna especificada deverá ser igual `!=`
+- `NOT_EQUAL`: recebe um valor em que a coluna especificada deverá ser igual `!=`
 - `GATHER_THAN`: recebe um valor minimo para comparação `>`
 - `GATHER_OR_EQUAL`: recebe um valor que deverá ser o mínimo incluido para comparação `>=`
 - `LESS_THAN`: recebe um valor máximo para comparação `<`
