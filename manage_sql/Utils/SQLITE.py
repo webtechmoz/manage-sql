@@ -189,10 +189,10 @@ class SQLITE:
         """
         
         try:
-            if condition:
+            if not condition:
                 multiprocessing.Process(
                     target=self.__sql_multiprocess.delete_data_multi,
-                    args=(tablename),
+                    args=(tablename,),
                     daemon=True
                 ).start()
             
