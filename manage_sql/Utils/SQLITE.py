@@ -1,6 +1,7 @@
-import multiprocessing
+import threading
 import sqlite3 as sq
 import os
+import shutil
 
 try:
     from ..Utils.utils_sqlite import (
@@ -94,7 +95,7 @@ class SQLITE:
             if table[0] != 'sqlite_sequence':
                 table_info = Table(name=table[0])
                 columns = cursor.execute(
-                    f'PRAGMA table_info({table[0]})'
+                    f"PRAGMA table_info({table[0]})"
                 ).fetchall()
 
                 for column in columns:
@@ -121,7 +122,7 @@ class SQLITE:
         connection.close()
 
         try:
-            os.remove(self.__path)
+            shutil.rmtree(self.__path)
         
         except Exception as e:
             self.__exception_error(message_error=e)
@@ -145,14 +146,12 @@ class SQLITE:
                 ),
                 *columns
             ]
-
-            all_columns = ', '.join(column.column_parameters for column in columns_details)
-            multiprocessing.Process(
+            
+            all_columns = ", ".join(column.column_parameters for column in columns_details)
+            self.__sql_threading(
                 target=self.__sql_multiprocess.create_table_multi,
                 args=(tablename, all_columns),
-                daemon=True
-            ).start()
-
+            )
         except Exception as e:
             self.__exception_error(message_error=e)
     
@@ -165,16 +164,15 @@ class SQLITE:
             insert_query: (list[ColumnData]): List of ColumnData objects containing the data to be inserted.
         """
 
-        columns: str = ', '.join([f'{edit.column}' for edit in insert_query])
+        columns: str = ', '.join([f"{edit.column}" for edit in insert_query])
         params: list = [edit.value for edit in insert_query]
         key: str = ', '.join('?' for _ in insert_query)
 
         try:
-            multiprocessing.Process(
+            self.__sql_threading(
                 target=self.__sql_multiprocess.insert_data_multi,
-                args=(tablename, columns, key, params),
-                daemon=True
-            ).start()
+                args=(tablename, columns, key, params)
+            )
         
         except Exception as e:
             self.__exception_error(message_error=e)
@@ -190,21 +188,19 @@ class SQLITE:
         
         try:
             if not condition:
-                multiprocessing.Process(
+                self.__sql_threading(
                     target=self.__sql_multiprocess.delete_data_multi,
-                    args=(tablename,),
-                    daemon=True
-                ).start()
+                    args=(tablename,)
+                )
             
             else:
                 condition_query = condition._Filter__condition.strip()
                 condition_params = condition._Filter__params
 
-                multiprocessing.Process(
+                self.__sql_threading(
                     target=self.__sql_multiprocess.delete_data_multi,
-                    args=(tablename, condition_params, condition_query),
-                    daemon=True
-                ).start()
+                    args=(tablename, condition_params, condition_query)
+                )
         
         except Exception as e:
             self.__exception_error(message_error=e)
@@ -228,13 +224,13 @@ class SQLITE:
         connection, cursor = self.__connect
 
         if not condition:
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename}')
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename}")
 
         else:
             condition_query: str = condition._Filter__condition.strip()
             condition_params: list = condition._Filter__params
 
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename} {condition_query}', tuple(condition_params))
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename} {condition_query}", tuple(condition_params))
 
         dados = cursor.fetchall()
 
@@ -255,28 +251,26 @@ class SQLITE:
                 Condition to specify which records to update.
         """
 
-        columns: str = ', '.join([f'{edit.column} = ?' for edit in edit_query])
+        columns: str = ', '.join([f"{edit.column} = ?" for edit in edit_query])
         params: list = [edit.value for edit in edit_query]
 
         try:
             
 
             if not condition:
-                multiprocessing.Process(
+                self.__sql_threading(
                     target=self.__sql_multiprocess.update_data_multi,
-                    args=(tablename, columns, params),
-                    daemon=True
-                ).start()
+                    args=(tablename, columns, params)
+                )
             
             else:
                 condition_query: str = condition._Filter__condition.strip()
                 params.extend(condition._Filter__params)
 
-                multiprocessing.Process(
+                self.__sql_threading(
                     target=self.__sql_multiprocess.update_data_multi,
-                    args=(tablename, columns, params, condition_query),
-                    daemon=True
-                ).start()
+                    args=(tablename, columns, params, condition_query)
+                )
 
         except Exception as e:
             self.__exception_error(message_error=e)
@@ -296,12 +290,14 @@ class SQLITE:
             connection, cursor = self.__connect
 
             column_details = column.column_parameters
-            cursor.execute(f'ALTER TABLE {tablename} ADD COLUMN {column_details}')
+            cursor.execute(f"ALTER TABLE {tablename} ADD COLUMN {column_details}")
 
             connection.commit()
         
-        except:
-            pass
+        except Exception as e:
+            self.__exception_error(
+                message_error=e
+            )
 
         finally:
             connection.close()
@@ -319,12 +315,14 @@ class SQLITE:
 
         try:
             connection, cursor = self.__connect
-            cursor.execute(f'ALTER TABLE {tablename} DROP COLUMN {column_name}')
+            cursor.execute(f"ALTER TABLE {tablename} DROP COLUMN {column_name}")
 
             connection.commit()
         
-        except:
-            pass
+        except Exception as e:
+            self.__exception_error(
+                message_error=e
+            )
 
         finally:
             connection.close()
@@ -340,7 +338,7 @@ class SQLITE:
 
         connection, cursor = self.__connect
 
-        cursor.execute(f'DROP TABLE IF EXISTS {tablename}')
+        cursor.execute(f"DROP TABLE IF EXISTS {tablename}")
 
         connection.commit()
         connection.close()
@@ -368,11 +366,10 @@ class SQLITE:
                 If there is an error in executing the SQL query, the exception is logged or raised.
         """
         
-        multiprocessing.Process(
+        self.__sql_threading(
             target=self.__sql_multiprocess.execute_query_multi,
-            args=(query),
-            daemon=True
-        ).start()
+            args=(query,)
+        )
             
     
     def encrypt_value(self, value) -> str:
@@ -404,8 +401,22 @@ class SQLITE:
         return EncryptValue(value).value_hashed
 
     def __exception_error(self, message_error: str):
-        print(f'Error: {message_error}')
+        print(f"Error: {message_error}")
         exit()
+    
+    def __sql_threading(self, target: object, args: tuple) -> None:
+        try:
+            process = threading.Thread(
+                target=target,
+                args=args
+            )
+            process.start()
+            process.join()
+        
+        except threading.ThreadError as e:
+            self.__exception_error(
+                message_error=e
+            )
 
 class SQLITE_MULTI:
     def __init__(
@@ -431,7 +442,7 @@ class SQLITE_MULTI:
         def create_connection() -> tuple[sq.Connection, sq.Cursor]:
 
             if not self.__path.endswith('.db'):
-                self.__path = os.path.join(self.__path, f'{self.__database}.db')
+                self.__path = os.path.join(self.__path, f"{self.__database}.db")
 
             connection = sq.connect(self.__path)
             cursor = connection.cursor()
@@ -457,16 +468,16 @@ class SQLITE_MULTI:
     def create_table_multi(self, table_name: str, columns: str):
             connection, cursor = self.__connect
             cursor.execute(
-                f'CREATE TABLE IF NOT EXISTS {table_name} ({columns})'
+                f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})"
             )
-
+            
             connection.close()
     
     def insert_data_multi(self, table_name: str, columns: str, key: str, params: list[None]):
         connection, cursor = self.__connect
 
         cursor.execute(
-            f'INSERT INTO {table_name} ({columns}) VALUES ({key})', tuple(params)
+            f"INSERT INTO {table_name} ({columns}) VALUES ({key})", tuple(params)
         )
 
         connection.commit()
@@ -476,10 +487,10 @@ class SQLITE_MULTI:
         connection, cursor = self.__connect
 
         if not condition_query:
-            cursor.execute(f'DELETE FROM {tablename}')
+            cursor.execute(f"DELETE FROM {tablename}")
         
         else:
-            cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
+            cursor.execute(f"DELETE FROM {tablename} {condition_query}", tuple(condition_params))
         
         connection.commit()
         connection.close()
