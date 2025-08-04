@@ -340,13 +340,13 @@ class POSTGRESQL:
         connection, cursor = self.__connect
 
         if not condition:
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename}')
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename}")
 
         else:
             condition_query: str = condition._Filter__condition.strip()
             condition_params: list = condition._Filter__params
 
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename} {condition_query}', tuple(condition_params))
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename} {condition_query}", tuple(condition_params))
 
         dados = cursor.fetchall()
 
@@ -368,7 +368,7 @@ class POSTGRESQL:
         """
         
         connection, cursor = self.__connect
-        columns: str = ', '.join([f'{edit.column} = %s' for edit in edit_query])
+        columns: str = ', '.join([f"{edit.column} = %s" for edit in edit_query])
         params: list = [edit.value for edit in edit_query]
 
         if not condition:
@@ -484,13 +484,13 @@ class POSTGRESQL:
         finally:
             connection.close()
     
-    def __exception_error(self, message_error: str):
+    def __exception_error(self, message_error: Exception):
         """
         Handles exceptions and prints the error message.
 
         Args:
-            message_error (str): The error message to be printed.
+            message_error (Exception): The error message to be printed.
         """
         
         print(f'Error: {message_error}')
-        exit()
+        raise message_error

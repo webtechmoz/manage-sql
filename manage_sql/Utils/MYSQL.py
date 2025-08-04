@@ -390,6 +390,6 @@ class MYSQL:
 
         return EncryptValue(value).value_hashed
     
-    def __exception_error(self, message_error: str):
+    def __exception_error(self, message_error: Exception):
         print(f'Error: {message_error}')
-        exit()
+        raise message_error

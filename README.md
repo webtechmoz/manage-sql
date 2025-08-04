@@ -1,5 +1,8 @@
 # MANAGE-SQL DOCUMENTATION
 
+[![PyPI version](https://img.shields.io/pypi/v/manage-sql.svg)](https://pypi.org/project/pyweber/) [![License](https://img.shields.io/pypi/l/manage-sql.svg)](https://github.com/webtechmoz/manage-sql/blob/master/LICENSE)
+
+
 A classe **manage-sql** foi feita de modo a facilitar a gestão e interação com bancos de dados sqlite.
 
 ## Funcionalidades

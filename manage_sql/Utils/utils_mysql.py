@@ -226,12 +226,12 @@ class Types:
     def Enum(self, values: tuple[str]) -> str:
         """Defines an SQL ENUM type with the provided values."""
 
-        return f'ENUM({', '.join(values)})'
+        return f"ENUM({', '.join(values)})"
     
     def Set(self, values: tuple[str]) -> str:
         """Defines an SQL SET type with the provided values."""
 
-        return f'SET({', '.join(values)})'
+        return f"SET({', '.join(values)})"
     
     Integer = __Integer()
     Text = __Text()

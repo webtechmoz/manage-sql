@@ -400,9 +400,9 @@ class SQLITE:
         """
         return EncryptValue(value).value_hashed
 
-    def __exception_error(self, message_error: str):
+    def __exception_error(self, message_error: Exception):
         print(f"Error: {message_error}")
-        exit()
+        raise message_error
     
     def __sql_threading(self, target: object, args: tuple) -> None:
         try:
