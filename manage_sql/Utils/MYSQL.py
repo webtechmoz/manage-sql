@@ -228,6 +228,29 @@ class MYSQL:
         except Exception as e:
             self.__exception_error(message_error=e)
     
+    def delete_data(self, tablename: str, condition: Filter = None):
+        """
+        Deletes data from the specified table, with an optional condition.
+
+        :param tablename: The name of the table from which to delete data.
+        :param condition: (Optional) A Filter object to specify the conditions for deletion.
+        :return: None
+        """
+
+        connection, cursor = self.__connect
+
+        if not condition:
+            cursor.execute(f'DELETE FROM {tablename}')
+        
+        else:
+            condition_query = condition._Filter__condition.strip()
+            condition_params = condition._Filter__params
+
+            cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
+        
+        connection.commit()
+        connection.close()
+    
     def detele_data(self, tablename: str, condition: Filter = None):
         """
         Deletes data from the specified table, with an optional condition.
@@ -264,13 +287,13 @@ class MYSQL:
         connection, cursor = self.__connect
 
         if not condition:
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename}')
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename}")
 
         else:
             condition_query: str = condition._Filter__condition.strip()
             condition_params: list = condition._Filter__params
 
-            cursor.execute(f'SELECT {', '.join(columns)} FROM {tablename} {condition_query}', tuple(condition_params))
+            cursor.execute(f"SELECT {', '.join(columns)} FROM {tablename} {condition_query}", tuple(condition_params))
 
         dados = cursor.fetchall()
 

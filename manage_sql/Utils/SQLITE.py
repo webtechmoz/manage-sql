@@ -2,6 +2,7 @@ import threading
 import sqlite3 as sq
 import os
 import shutil
+from pathlib import Path
 
 try:
     from ..Utils.utils_sqlite import (
@@ -125,7 +126,7 @@ class SQLITE:
             shutil.rmtree(self.__path)
         
         except Exception as e:
-            self.__exception_error(message_error=e)
+            self.exception_error(message_error=e)
     
     def create_table(self, tablename: str, columns: list[Column]) -> None:
         """
@@ -153,7 +154,7 @@ class SQLITE:
                 args=(tablename, all_columns),
             )
         except Exception as e:
-            self.__exception_error(message_error=e)
+            self.exception_error(message_error=e)
     
     def insert_data(self, tablename: str, insert_query: list[ColumnData]) -> None:
         """
@@ -175,7 +176,7 @@ class SQLITE:
             )
         
         except Exception as e:
-            self.__exception_error(message_error=e)
+            self.exception_error(message_error=e)
 
     def detele_data(self, tablename: str, condition: Filter = None):
         """
@@ -203,7 +204,7 @@ class SQLITE:
                 )
         
         except Exception as e:
-            self.__exception_error(message_error=e)
+            self.exception_error(message_error=e)
     
     def select_data(self, tablename: str, columns: list[str] = ['*'], condition: Filter = None):
         """
@@ -273,7 +274,7 @@ class SQLITE:
                 )
 
         except Exception as e:
-            self.__exception_error(message_error=e)
+            self.exception_error(message_error=e)
     
     def add_column(self, tablename: str, column: Column):
         """
@@ -295,7 +296,7 @@ class SQLITE:
             connection.commit()
         
         except Exception as e:
-            self.__exception_error(
+            self.exception_error(
                 message_error=e
             )
 
@@ -320,7 +321,7 @@ class SQLITE:
             connection.commit()
         
         except Exception as e:
-            self.__exception_error(
+            self.exception_error(
                 message_error=e
             )
 
@@ -399,10 +400,6 @@ class SQLITE:
                 If there is an error during encryption, the exception is logged or raised.
         """
         return EncryptValue(value).value_hashed
-
-    def __exception_error(self, message_error: Exception):
-        print(f"Error: {message_error}")
-        raise message_error
     
     def __sql_threading(self, target: object, args: tuple) -> None:
         try:
@@ -414,7 +411,7 @@ class SQLITE:
             process.join()
         
         except threading.ThreadError as e:
-            self.__exception_error(
+            self.exception_error(
                 message_error=e
             )
 
@@ -450,8 +447,11 @@ class SQLITE_MULTI:
             return connection, cursor
         
         try:
-            os.mkdir(path=self.__path)
+            Path(self.__path).mkdir(exist_ok=True, parents=True)
 
+            return create_connection()
+        
+        except FileExistsError:
             return create_connection()
         
         except Exception as e:
@@ -459,7 +459,7 @@ class SQLITE_MULTI:
                 return create_connection()
             
             else:
-                self.__exception_error(message_error=e)
+                self.exception_error(message_error=e)
     
     @property
     def public_connect(self):
@@ -517,3 +517,7 @@ class SQLITE_MULTI:
         
         finally:
             connection.close()
+    
+    def exception_error(self, message_error: Exception):
+        print(f"Error: {message_error}")
+        raise message_error

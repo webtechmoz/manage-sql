@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manage-sql"
-version = "1.0.5"
+version = "1.1.0"
 description = "Python library for managing SQLite, MySQL, and PostgreSQL databases with greater efficiency."
 readme = "README.md"
 authors = [
@@ -24,6 +24,8 @@ keywords = [
     "postgresql python"
 ]
 classifiers = [
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
