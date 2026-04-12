@@ -72,7 +72,7 @@ class POSTGRESQL:
         self.delete_by = Filter
         self.ColumnData = ColumnData
         self.CURRENT_TIMESTAMP = 'CURRENT_TIMESTAMP'
-    
+
     @property
     def __connect(self):
         """
@@ -98,10 +98,10 @@ class POSTGRESQL:
                 user = self.__username,
                 password = self.__password
             )
-            
+
             connection.autocommit = True
             return connection
-        
+
         def connect_with_database():
             connection = postgresql.connect(
                 host = self.__host,
@@ -113,27 +113,27 @@ class POSTGRESQL:
 
             connection.autocommit = True
             return connection
-        
+
         if self.__postgres_url != None:
             connection = connect_with_url()
 
             cursor = connection.cursor()
             return connection, cursor
-        
+
         else:
             if not self.__database:
                 connection = connect_without_database()
 
                 cursor = connection.cursor()
                 return connection, cursor
-            
+
             else:
                 try:
                     connection = connect_with_database()
 
                     cursor = connection.cursor()
                     return connection, cursor
-                
+
                 except:
                     try:
                         connection = connect_without_database()
@@ -142,13 +142,13 @@ class POSTGRESQL:
                         connection = connect_with_database()
                         cursor = connection.cursor()
                         return connection, cursor
-                    
+
                     except Exception as e:
                         self.__exception_error(message_error=e)
-                    
+
                     finally:
                         connection.close()
-    
+
     @property
     def tables(self) -> list[Table]:
         """
@@ -157,9 +157,9 @@ class POSTGRESQL:
         Returns:
             list[Table]: A list of Table objects representing the database tables.
         """
-        
+
         connection, cursor = self.__connect
-            
+
         cursor.execute(
             "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
         )
@@ -173,19 +173,19 @@ class POSTGRESQL:
                 table_info = Table(name=table[0])
                 cursor.execute(
                     f"""
-                    SELECT 
-                        c.column_name, 
+                    SELECT
+                        c.column_name,
                         c.data_type,
                         CASE WHEN tc.constraint_type = 'PRIMARY KEY' THEN 'YES' ELSE 'NO' END AS is_primary_key,
                         CASE WHEN c.column_default LIKE 'nextval%' THEN 'YES' ELSE 'NO' END AS is_identity,
                         CASE WHEN c.is_nullable = 'NO' THEN 'NO' ELSE 'YES' END AS is_nullable,
                         c.column_default
                     FROM information_schema.columns AS c
-                    LEFT JOIN information_schema.table_constraints AS tc 
-                        ON c.table_name = tc.table_name 
+                    LEFT JOIN information_schema.table_constraints AS tc
+                        ON c.table_name = tc.table_name
                         AND c.table_schema = tc.table_schema
-                    LEFT JOIN information_schema.key_column_usage AS kcu 
-                        ON kcu.table_name = c.table_name AND kcu.column_name = c.column_name 
+                    LEFT JOIN information_schema.key_column_usage AS kcu
+                        ON kcu.table_name = c.table_name AND kcu.column_name = c.column_name
                         AND kcu.table_schema = c.table_schema
                     WHERE c.table_name = '{table[0]}';
                     """
@@ -204,13 +204,13 @@ class POSTGRESQL:
                             default_value = column[5] if column[5] else None
                         )
                     )
-                
+
                 db_tables.append(table_info)
-        
+
         connection.close()
 
         return db_tables
-    
+
     @property
     def drop_database(self) -> None:
         """
@@ -225,16 +225,16 @@ class POSTGRESQL:
 
             if self.__database != None:
                 cursor.execute(f'DROP DATABASE {self.__database}')
-            
+
             else:
                 cursor.execute(f'DROP DATABASE {self.__postgres_url}')
-        
+
         except Exception as e:
             self.__exception_error(message_error=e)
-        
+
         finally:
             connection.close()
-    
+
     def create_table(self, tablename: str, columns: list[Column]) -> None:
         """
         Creates a new table in the database with the specified columns.
@@ -258,17 +258,17 @@ class POSTGRESQL:
             ]
 
             all_columns = ', '.join(column.column_parameters for column in columns_details)
-            
+
             connection, cursor = self.__connect
             cursor.execute(
                 f'CREATE TABLE IF NOT EXISTS {tablename} ({all_columns})'
             )
 
             connection.close()
-        
+
         except Exception as e:
             self.__exception_error(message_error=e)
-    
+
     def insert_data(self, tablename: str, insert_query: list[ColumnData]) -> None:
         """
         Inserts data into a specified table.
@@ -294,10 +294,10 @@ class POSTGRESQL:
 
             connection.commit()
             connection.close()
-        
+
         except Exception as e:
             self.__exception_error(message_error=e)
-    
+
     def detele_data(self, tablename: str, condition: Filter = None):
         """
         Deletes data from a specified table, optionally filtered by a condition.
@@ -314,16 +314,16 @@ class POSTGRESQL:
 
         if not condition:
             cursor.execute(f'DELETE FROM {tablename}')
-        
+
         else:
             condition_query = condition._Filter__condition.strip()
             condition_params = condition._Filter__params
 
             cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def select_data(self, tablename: str, columns: list[str] = ['*'], condition: Filter = None):
         """
         Selects data from a specified table.
@@ -353,7 +353,7 @@ class POSTGRESQL:
         connection.close()
 
         return dados
-    
+
     def update_data(self, tablename: str, edit_query: list[ColumnData], condition: Filter = None):
         """
         Updates data in a specified table.
@@ -366,23 +366,23 @@ class POSTGRESQL:
         Raises:
             Exception: If there's an error in updating the data.
         """
-        
+
         connection, cursor = self.__connect
         columns: str = ', '.join([f"{edit.column} = %s" for edit in edit_query])
         params: list = [edit.value for edit in edit_query]
 
         if not condition:
             cursor.execute(f"UPDATE {tablename} SET {columns}", tuple(params))
-        
+
         else:
             condition_query: str = condition._Filter__condition.strip()
             params.extend(condition._Filter__params)
 
             cursor.execute(f"UPDATE {tablename} SET {columns} {condition_query}", tuple(params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def add_column(self, tablename: str, column: Column):
         """
         Adds a new column to an existing table.
@@ -401,13 +401,13 @@ class POSTGRESQL:
             cursor.execute(f'ALTER TABLE {tablename} ADD COLUMN {column_details}')
 
             connection.commit()
-        
+
         except:
             pass
-        
+
         finally:
             connection.close()
-    
+
     def drop_column(self, tablename: str, column_name: str):
         """
         Drops a column from an existing table.
@@ -425,13 +425,13 @@ class POSTGRESQL:
             cursor.execute(f'ALTER TABLE {tablename} DROP COLUMN {column_name}')
 
             connection.commit()
-        
+
         except:
             pass
-        
+
         finally:
             connection.close()
-    
+
     def drop_table(self, tablename: str):
         """
         Drops a specified table from the database.
@@ -449,7 +449,7 @@ class POSTGRESQL:
 
         connection.commit()
         connection.close()
-    
+
     def encrypt_value(self, value) -> str:
         """
         Encrypts a given value.
@@ -463,7 +463,7 @@ class POSTGRESQL:
 
         return EncryptValue(value).value_hashed
 
-    def execute_query(self, query: str):
+    def execute_query(self, query: str, params: tuple[str] = None):
         """
         Executes a raw SQL query.
 
@@ -476,14 +476,17 @@ class POSTGRESQL:
 
         try:
             connection, cursor = self.__connect
+            cursor.execute(query, params or ())
 
-            cursor.execute(query)
+            try:
+                data = cursor.fetchall()
+                return data
+            except:
+                return None
 
-            return cursor.fetchall()
-        
         finally:
             connection.close()
-    
+
     def __exception_error(self, message_error: Exception):
         """
         Handles exceptions and prints the error message.
@@ -491,6 +494,6 @@ class POSTGRESQL:
         Args:
             message_error (Exception): The error message to be printed.
         """
-        
+
         print(f'Error: {message_error}')
         raise message_error

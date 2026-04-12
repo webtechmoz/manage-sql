@@ -27,7 +27,7 @@ except:
 class SQLITE:
     """
     A class to manage SQLite database operations such as creating tables, inserting, updating, deleting, and selecting data.
-    
+
     Attributes:
         database (str):
             The name of the SQLite database file.
@@ -70,11 +70,11 @@ class SQLITE:
             database= self.__database,
             path= self.__path
         )
-    
+
     @property
     def __connect(self) -> tuple[sq.Connection, sq.Cursor]:
         return self.__sql_multiprocess.public_connect
-    
+
     @property
     def tables(self) -> list[Table]:
         """
@@ -85,7 +85,7 @@ class SQLITE:
         """
 
         connection, cursor = self.__connect
-            
+
         tables = cursor.execute(
             'SELECT name FROM sqlite_master WHERE type = "table"'
         ).fetchall()
@@ -106,13 +106,13 @@ class SQLITE:
                             column_type=self.Column_types(value=column[2])
                         )
                     )
-                
+
                 db_tables.append(table_info)
-        
+
         connection.close()
 
         return db_tables
-    
+
     @property
     def drop_database(self) -> None:
         """
@@ -124,10 +124,10 @@ class SQLITE:
 
         try:
             shutil.rmtree(self.__path)
-        
+
         except Exception as e:
             self.exception_error(message_error=e)
-    
+
     def create_table(self, tablename: str, columns: list[Column]) -> None:
         """
         Creates a table with the specified columns in the database.
@@ -147,7 +147,7 @@ class SQLITE:
                 ),
                 *columns
             ]
-            
+
             all_columns = ", ".join(column.column_parameters for column in columns_details)
             self.__sql_threading(
                 target=self.__sql_multiprocess.create_table_multi,
@@ -155,7 +155,7 @@ class SQLITE:
             )
         except Exception as e:
             self.exception_error(message_error=e)
-    
+
     def insert_data(self, tablename: str, insert_query: list[ColumnData]) -> None:
         """
         Inserts data into the specified table.
@@ -174,7 +174,7 @@ class SQLITE:
                 target=self.__sql_multiprocess.insert_data_multi,
                 args=(tablename, columns, key, params)
             )
-        
+
         except Exception as e:
             self.exception_error(message_error=e)
 
@@ -186,14 +186,14 @@ class SQLITE:
             tablename (str): Name of the table where data will be deleted.
             condition (Filter, optional): Filtering condition to specify which records to delete.
         """
-        
+
         try:
             if not condition:
                 self.__sql_threading(
                     target=self.__sql_multiprocess.delete_data_multi,
                     args=(tablename,)
                 )
-            
+
             else:
                 condition_query = condition._Filter__condition.strip()
                 condition_params = condition._Filter__params
@@ -202,10 +202,10 @@ class SQLITE:
                     target=self.__sql_multiprocess.delete_data_multi,
                     args=(tablename, condition_params, condition_query)
                 )
-        
+
         except Exception as e:
             self.exception_error(message_error=e)
-    
+
     def select_data(self, tablename: str, columns: list[str] = ['*'], condition: Filter = None):
         """
         Selects data from the specified table.
@@ -238,7 +238,7 @@ class SQLITE:
         connection.close()
 
         return dados
-    
+
     def update_data(self, tablename: str, edit_query: list[ColumnData], condition: Filter = None):
         """
         Updates data in the specified table.
@@ -256,14 +256,14 @@ class SQLITE:
         params: list = [edit.value for edit in edit_query]
 
         try:
-            
+
 
             if not condition:
                 self.__sql_threading(
                     target=self.__sql_multiprocess.update_data_multi,
                     args=(tablename, columns, params)
                 )
-            
+
             else:
                 condition_query: str = condition._Filter__condition.strip()
                 params.extend(condition._Filter__params)
@@ -275,7 +275,7 @@ class SQLITE:
 
         except Exception as e:
             self.exception_error(message_error=e)
-    
+
     def add_column(self, tablename: str, column: Column):
         """
         Adds a new column to an existing table.
@@ -294,7 +294,7 @@ class SQLITE:
             cursor.execute(f"ALTER TABLE {tablename} ADD COLUMN {column_details}")
 
             connection.commit()
-        
+
         except Exception as e:
             self.exception_error(
                 message_error=e
@@ -302,7 +302,7 @@ class SQLITE:
 
         finally:
             connection.close()
-    
+
     def drop_column(self, tablename: str, column_name: str):
         """
         Drops a column from an existing table.
@@ -319,7 +319,7 @@ class SQLITE:
             cursor.execute(f"ALTER TABLE {tablename} DROP COLUMN {column_name}")
 
             connection.commit()
-        
+
         except Exception as e:
             self.exception_error(
                 message_error=e
@@ -327,7 +327,7 @@ class SQLITE:
 
         finally:
             connection.close()
-    
+
     def drop_table(self, tablename: str):
         """
         Drops a table from the database.
@@ -343,8 +343,8 @@ class SQLITE:
 
         connection.commit()
         connection.close()
-    
-    def execute_query(self, query: str):
+
+    def execute_query(self, query: str, params: tuple[str] = None):
         """
         Executes a raw SQL query on the SQLite database.
 
@@ -366,13 +366,13 @@ class SQLITE:
             Exception:
                 If there is an error in executing the SQL query, the exception is logged or raised.
         """
-        
+
         self.__sql_threading(
             target=self.__sql_multiprocess.execute_query_multi,
-            args=(query,)
+            args=(query, params or ())
         )
-            
-    
+
+
     def encrypt_value(self, value) -> str:
         """
         Encrypts a given value using a predefined encryption method.
@@ -400,7 +400,7 @@ class SQLITE:
                 If there is an error during encryption, the exception is logged or raised.
         """
         return EncryptValue(value).value_hashed
-    
+
     def __sql_threading(self, target: object, args: tuple) -> None:
         try:
             process = threading.Thread(
@@ -409,7 +409,7 @@ class SQLITE:
             )
             process.start()
             process.join()
-        
+
         except threading.ThreadError as e:
             self.exception_error(
                 message_error=e
@@ -423,7 +423,7 @@ class SQLITE_MULTI:
     ):
         self.__database = database
         self.__path = path
-    
+
     @property
     def __connect(self) -> tuple[sq.Connection, sq.Cursor]:
         """
@@ -445,34 +445,34 @@ class SQLITE_MULTI:
             cursor = connection.cursor()
 
             return connection, cursor
-        
+
         try:
             Path(self.__path).mkdir(exist_ok=True, parents=True)
 
             return create_connection()
-        
+
         except FileExistsError:
             return create_connection()
-        
+
         except Exception as e:
             if 'WinError 183' in str(e):
                 return create_connection()
-            
+
             else:
                 self.exception_error(message_error=e)
-    
+
     @property
     def public_connect(self):
         return self.__connect
-    
+
     def create_table_multi(self, table_name: str, columns: str):
             connection, cursor = self.__connect
             cursor.execute(
                 f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})"
             )
-            
+
             connection.close()
-    
+
     def insert_data_multi(self, table_name: str, columns: str, key: str, params: list[None]):
         connection, cursor = self.__connect
 
@@ -482,42 +482,45 @@ class SQLITE_MULTI:
 
         connection.commit()
         connection.close()
-    
+
     def delete_data_multi(self, tablename: str, condition_params: list = None, condition_query: str = None):
         connection, cursor = self.__connect
 
         if not condition_query:
             cursor.execute(f"DELETE FROM {tablename}")
-        
+
         else:
             cursor.execute(f"DELETE FROM {tablename} {condition_query}", tuple(condition_params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def update_data_multi(self, tablename: str, columns: str, params: list, condition_query: str = None):
             connection, cursor = self.__connect
 
             if not condition_query:
                 cursor.execute(f"UPDATE {tablename} SET {columns}", tuple(params))
-            
+
             else:
                 cursor.execute(f"UPDATE {tablename} SET {columns} {condition_query}", tuple(params))
 
             connection.commit()
             connection.close()
-    
-    def execute_query_multi(self, query: str):
+
+    def execute_query_multi(self, query: str, params: tuple[str] = None):
         try:
             connection, cursor = self.__connect
 
-            cursor.execute(query)
+            cursor.execute(query, params or ())
 
-            return cursor.fetchall()
-        
+            try:
+                return cursor.fetchall()
+            except:
+                return None
+
         finally:
             connection.close()
-    
+
     def exception_error(self, message_error: Exception):
         print(f"Error: {message_error}")
         raise message_error

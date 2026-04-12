@@ -53,7 +53,7 @@ class MYSQL:
         self.delete_by = Filter
         self.ColumnData = ColumnData
         self.CURRENT_TIMESTAMP = 'CURRENT_TIMESTAMP'
-    
+
     @property
     def __connect(self):
         """
@@ -72,7 +72,7 @@ class MYSQL:
             )
 
             return connection
-        
+
         def connect_with_database():
             connection = mysql.connect(
                 host = self.__host,
@@ -83,21 +83,21 @@ class MYSQL:
             )
 
             return connection
-            
+
         if not self.__database:
             connection = connect_without_database()
-        
+
         else:
             try:
                 connection = connect_with_database()
-            
+
             except:
                 try:
                     connection = connect_without_database()
                     connection.cursor().execute(f'CREATE DATABASE IF NOT EXISTS {self.__database}')
 
                     connection = connect_with_database()
-                
+
                 except Exception as e:
                     connection.close()
                     self.__exception_error(message_error=e)
@@ -105,7 +105,7 @@ class MYSQL:
         cursor = connection.cursor()
 
         return connection, cursor
-    
+
     @property
     def tables(self) -> list[Table]:
         """
@@ -113,9 +113,9 @@ class MYSQL:
 
         :return: A list of Table objects representing each table in the database.
         """
-        
+
         connection, cursor = self.__connect
-            
+
         cursor.execute(
             'SHOW TABLES'
         )
@@ -147,13 +147,13 @@ class MYSQL:
                             on_update = column[5].split(' ')[column[5].split(' ').index('update') + 1] if "on update" in column[5] else None
                         )
                     )
-                
+
                 db_tables.append(table_info)
-        
+
         connection.close()
 
         return db_tables
-    
+
     @property
     def drop_database(self) -> None:
         """
@@ -166,10 +166,10 @@ class MYSQL:
 
         try:
             cursor.execute(f'DROP DATABASE {self.__database}')
-        
+
         finally:
             connection.close()
-    
+
     def create_table(self, tablename: str, columns: list[Column]) -> None:
         """
         Creates a table in the connected database with the specified columns.
@@ -191,17 +191,17 @@ class MYSQL:
             ]
 
             all_columns = ', '.join(column.column_parameters for column in columns_details)
-            
+
             connection, cursor = self.__connect
             cursor.execute(
                 f'CREATE TABLE IF NOT EXISTS {tablename} ({all_columns})'
             )
 
             connection.close()
-        
+
         except Exception as e:
             self.__exception_error(message_error=e)
-    
+
     def insert_data(self, tablename: str, insert_query: list[ColumnData]) -> None:
         """
         Inserts data into a specified table.
@@ -224,10 +224,10 @@ class MYSQL:
 
             connection.commit()
             connection.close()
-        
+
         except Exception as e:
             self.__exception_error(message_error=e)
-    
+
     def delete_data(self, tablename: str, condition: Filter = None):
         """
         Deletes data from the specified table, with an optional condition.
@@ -241,16 +241,16 @@ class MYSQL:
 
         if not condition:
             cursor.execute(f'DELETE FROM {tablename}')
-        
+
         else:
             condition_query = condition._Filter__condition.strip()
             condition_params = condition._Filter__params
 
             cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def detele_data(self, tablename: str, condition: Filter = None):
         """
         Deletes data from the specified table, with an optional condition.
@@ -264,16 +264,16 @@ class MYSQL:
 
         if not condition:
             cursor.execute(f'DELETE FROM {tablename}')
-        
+
         else:
             condition_query = condition._Filter__condition.strip()
             condition_params = condition._Filter__params
 
             cursor.execute(f'DELETE FROM {tablename} {condition_query}', tuple(condition_params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def select_data(self, tablename: str, columns: list[str] = ['*'], condition: Filter = None):
         """
         Selects data from a specified table, with optional conditions.
@@ -300,7 +300,7 @@ class MYSQL:
         connection.close()
 
         return dados
-    
+
     def update_data(self, tablename: str, edit_query: list[ColumnData], condition: Filter = None):
         """
         Updates data in the specified table with an optional condition.
@@ -310,23 +310,23 @@ class MYSQL:
         :param condition: (Optional) A Filter object to specify the conditions for the update.
         :return: None
         """
-        
+
         connection, cursor = self.__connect
         columns: str = ', '.join([f'{edit.column} = %s' for edit in edit_query])
         params: list = [edit.value for edit in edit_query]
 
         if not condition:
             cursor.execute(f"UPDATE {tablename} SET {columns}", tuple(params))
-        
+
         else:
             condition_query: str = condition._Filter__condition.strip()
             params.extend(condition._Filter__params)
 
             cursor.execute(f"UPDATE {tablename} SET {columns} {condition_query}", tuple(params))
-        
+
         connection.commit()
         connection.close()
-    
+
     def add_column(self, tablename: str, column: Column):
         """
         Adds a new column to an existing table.
@@ -342,13 +342,13 @@ class MYSQL:
             cursor.execute(f'ALTER TABLE {tablename} ADD COLUMN {column_details}')
 
             connection.commit()
-        
+
         except:
             pass
-        
+
         finally:
             connection.close()
-    
+
     def drop_column(self, tablename: str, column_name: str):
         """
         Drops a column from the specified table.
@@ -363,13 +363,13 @@ class MYSQL:
             cursor.execute(f'ALTER TABLE {tablename} DROP COLUMN {column_name}')
 
             connection.commit()
-        
+
         except:
             pass
-        
+
         finally:
             connection.close()
-    
+
     def drop_table(self, tablename: str):
         """
         Drops a table from the database if it exists.
@@ -384,25 +384,30 @@ class MYSQL:
 
         connection.commit()
         connection.close()
-    
-    def execute_query(self, query: str):
+
+    def execute_query(self, query: str, params: tuple[str] = None, map_results = False):
         """
         Executes a raw SQL query against the database.
 
         :param query: The SQL query to execute.
+        :param params: The SQL parameters ans tuple
+        :param map_results: The SQL boolean map_results
         :return: The result of the query, typically a list of rows.
         """
 
         try:
             connection, cursor = self.__connect
 
-            cursor.execute(query)
+            cursor.execute(operation=query, params=params or (), map_results=map_results)
 
-            return cursor.fetchall()
-        
+            try:
+                return cursor.fetchall()
+            except:
+                return None
+
         finally:
             connection.close()
-    
+
     def encrypt_value(self, value) -> str:
         """
         Encrypts a given value.
@@ -412,7 +417,7 @@ class MYSQL:
         """
 
         return EncryptValue(value).value_hashed
-    
+
     def __exception_error(self, message_error: Exception):
         print(f'Error: {message_error}')
         raise message_error
